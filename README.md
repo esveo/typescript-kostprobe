@@ -26,7 +26,7 @@
 
 TypeScript erobert die Welt und vielleicht auch dein Herz. In diesem Workshop bekommst du eine kleine Kostprobe davon, wie du selbst ein TypeScript Projekt aufsetzen kannst, was TypeScript so besonders macht und welche Tricks und Kniffe es gibt, den Schreib- und Wartungsaufwand in deinem TypeScript-Projekt so gering wie möglich zu halten.
 
-Alles was du dafür brauchst, ist eine IDE, die TypeScript versteht (ich persönlich nutze VS Code, Alternativen wie die JetBrains-Produkte oder Atom gehen auch, da kann ich aber weniger Support geben) und eine Installation von einer halbwegs aktuellen Version von Node.js/npm [Wiki-Eintrag](https://wiki.queo-group.com/display/QUEOCAMPUS/G+-+nodejs-switch-script).
+Alles was du dafür brauchst, ist eine IDE, die TypeScript versteht (ich persönlich nutze VS Code, Alternativen wie die JetBrains-Produkte oder Atom gehen auch, da kann ich aber weniger Support geben) und eine Installation von einer halbwegs aktuellen Version von Node.js/npm.
 
 JavaScript-Grundlagen können außerdem nicht schaden, sind aber nicht vorrausgesetzt [MDN-JavaScript Guide](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide).
 
