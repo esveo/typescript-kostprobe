@@ -14,11 +14,8 @@
 - [6. Die ersten besonderen Typen: Union Types & Literal Types](#6-die-ersten-besonderen-typen-union-types--literal-types)
 - [7. Type- und Value-Welt](#7-type--und-value-welt)
 - [8. Generic Type alias](#8-generic-type-alias)
-- [9. never, any](#9-never-any)
-- [10. Mapped Types + Conditional Types](#10-mapped-types--conditional-types)
-- [11. Weiterführung](#11-weiterführung)
-  - [11.1. Web-Framework](#111-web-framework)
-  - [11.2. Persistenz](#112-persistenz)
+- [9. any @ts-ignore und @ts-expect-error](#9-any-ts-ignore-und-ts-expect-error)
+- [11. Abschluss](#11-abschluss)
 
 # TypeScript — Eine Kostprobe
 
@@ -521,32 +518,142 @@ let filtered3 = filterProducts(products, { getPriceDetails: () => 1 });
 
 ## 8. Generic Type alias
 
-- Product.description hinzufügen (müssen wir an zwei Stellen machen, das ist blöd...)
-- typeof + ReturnType
-- ReturnType Generic um aus dem Typ einer Funktion, den Typ des Rückgabewerts zu erhalten
+🎓 Wissen: TypeScripts Fähigkeit, Typen aus anderen Typen zu erzeugen ist einer der USPs der Programmiersprache. ([Ja, TypeScript Typen sind Turing-Vollständig](https://github.com/microsoft/TypeScript/issues/14833)) Eine ganze Sektion der Dokumentation widmet sich diesem Thema: https://www.typescriptlang.org/docs/handbook/2/types-from-types.html
+Die Basics sind in folgendem Beispiel dargestellt:
 
-- Aufgabe
+```ts
+type T1 = { a: number; b: string };
+// T2 = 'a' | 'b'
+type T2 = keyof T1;
 
-Das partialProduct Argument von findProduct soll nicht manuell zusammengebastelt werden, sondern abgeleitet werden.
+// number | string, same as T1[keyof T1]
+type T3 = T1[T2];
 
-https://www.typescriptlang.org/docs/handbook/utility-types.html
+// Creates a new type T4, where every key
+// of T1 is optional. The values have the same types
+type T4 = {
+  [Key in keyof T1]?: T1[Key];
+};
+```
 
-## 9. never, any
+💣 Problem: Damit können wir Typen sehr flexibel Transformieren. Diese Transformationen sind so aber nicht wiederverwendbar. Was wir brauchen, sind "Funktionen" die auf Typen arbeiten. Und genau das sind Generics:
 
-Add VAT: TEMPORARY_COVID_VAT
+```ts
+type ValueOf<TObject> = TObject[keyof TObject];
 
-Bevor wir das machen, wollen wir einen Test schreiben, der Sicherstellt, dass VAT einen Fehlerschmeißt, bei unbekanntem VAT-Type
---> Exhaustivenes checks
+type T1 = { a: number; b: string };
 
-## 10. Mapped Types + Conditional Types
+// string | number
+type ValuesOfT1 = ValueOf<T1>;
 
-## 11. Weiterführung
+type PartialObject<TObject> = {
+  [Key in keyof TObject]?: TObject[Key];
+};
 
-### 11.1. Web-Framework
+// PartialT1 = {
+//    a?: number | undefined;
+//    b?: string | undefined;
+// }
+type PartialT1 = PartialObject<T1>;
+```
 
-Fastify: https://github.com/fastify/fastify/blob/HEAD/README.md#install
-https://www.fastify.io/
+🎓 Wissen: Viele dieser Typ-Transformationen sind bereits in TypeScript eingebaut und global verfügbar (wie z.B. `Partial`, eine eingebaute Implementierung des `PartialObject` Beispiels). Eine Liste dieser eingebauten Typen findet sich in der [Dokumentation](https://www.typescriptlang.org/docs/handbook/utility-types.html).
 
-### 11.2. Persistenz
+1. 💪 Füge auf dem Produkt ein weiteres Feld `description` hinzu. Achte darauf, an wie vielen Stellen du dieses Feld auf Typebene definieren musst, damit alles wieder funktioniert. **Achtung** Die Filterfunktion soll auch nach diesem Feld filtern können.
+2. 💪 Anstatt den `Product` Typ selbst zu definieren, wollen wir diesen aus dem Rückgabewert von `createProduct` extrahieren. Nutze dazu `typeof` + weitere [Hilfstypen](https://www.typescriptlang.org/docs/handbook/utility-types.html)
+3. 💪 Anstatt das Partielle Produkt von `filterProducts` manuell anzugeben, soll dieses aus dem ursprünglichen `Product` Typ generiert werden. Achte daruaf, dass Felder
+4. 💯 Zusatzaufgabe für Experten: Schreibe den Typ für das partielle Produkt so, dass automatisch nur die Felder angegeben werden können, in denen KEINE Funktionen liegt. Wenn also auf `Product` eine weitere Funktion z.B. `serialize` gepflegt wird, soll danach nicht gefiltert werden dürfen (ohne Anpassungen an `filterProducts`) und wenn ein weiteres Datenfeld dazukommt, soll es automatisch mit gefiltert werden können.
 
-https://www.npmjs.com/package/better-sqlite3
+## 9. any @ts-ignore und @ts-expect-error
+
+💣 Problem: Aktuell verlassen wir uns darauf, dass die Typen in unserem System immer zur Implementierung passen. Es ist uns gerade nicht möglich, Funktionen auch mal "Falsch" aufzurufen, um z.B. Fehlerbehandlung zu testen. Dafür brauchen wir Lösungen:
+
+```ts
+function sum(a: number, b: number): number {
+  return a + b;
+}
+
+test("sum should throw an error when called with anything but numbers", () => {
+  // TypeScript will complain here and will always show an error :(
+  expect(() => sum(1, "two")).toThrow();
+
+  // Solution 1: any
+  let arg: any = "two";
+  expect(() => sum(1, arg)).toThrow();
+  expect(() => sum(1, "two" as any)).toThrow();
+
+  // Solution 2: @ts-ignore
+
+  // @ts-ignore we want to test this behavior
+  expect(() => sum(1, "two")).toThrow();
+
+  // Solution 3: @ts-expect-error. Will throw a type error,
+  // When the following line DOES NOT throw an error.
+
+  // @ts-expect-error
+  expect(() => sum(1, "two")).toThrow();
+});
+```
+
+1. 💪 Schreibe einen Test, der prüft, ob `calculateVAT` einen Fehler wirft, wenn sie mit einem unbekannten VAT-Type aufgerufen werden.
+2. 💪 Füge bei `VATType` einen neuen Wert hinzu: `TEMPORARY_COVID_VAT`
+
+💣 Problem: Immerhin können wir jetzt einen Test für unbekannte VAT-Typen schreiben. Beim Hinzufügen eines neuen Wertes müssen wir aber immer noch selbst wissen, ob wir diesen neuen Wert überall hinzugefügt haben. Unter Umständen hast du die letzte Aufgabe schon so interpretiert, dass natürlich die Berechnungsfunktionen auch mit diesem neuen Wert umgehen können müssen. Hätte jemand anderes das auch gewusst? Hätte jemand das gewusst, der gerade neu ins Projekt gekommen ist? Irgendwie müssten wir eine Möglichkeit finden, den Compiler dazu zu nutzen, alle Stellen zu finden, wo wir ALLE Optionen abprüfen wollen...
+
+🎓 Wissen: Wir können uns hier ein Feature von TypeScript zu nutzen machen, was wir ganz am Anfang schon mal abgedeckt hatten: Die Control-Flow-Analyse von TypeScript
+
+```ts
+function repeat(x: number | string, times: number) {
+  if (typeof x === "string") {
+    // Here, TypeScript knows, that x is of type string
+    return x.repeat(times);
+  }
+
+  if (typeof x === "number") {
+    // Here, TypeScript knows that x is of type number
+    // since the string case already returned.
+    return x.toFixed(1).repeat(times);
+  }
+
+  // TypeScript KNOWS that we can never reach this spot,
+  // since x can only be of type string or number.
+  // TypeScript annotates this variable with the never type.
+  // This line will only NOT throw a type error, when x is also of type never.
+  let result: never = x;
+
+  // To help non-TS users of our code, we can additionally throw an error.
+  throw new Error(`x has unexpected type ${typeof x}`);
+}
+```
+
+💣 Problem: Diese zwei Zeilen sind schon sehr nützlich, aber du musst dich immer an diese Kombination erinnern... Wir sollten das in eine eigene Funktion schreiben:
+
+```ts
+// This function never returns a value,
+// since it always throws an error.
+// Only use this in places that will never
+// get executed under normal circumstances.
+function assertNever(x: never): never {
+  throw new Error(`x has unexpected type ${typeof x}`);
+}
+
+function repeat(x: number | string, times: number) {
+  if (typeof x === "string") {
+    return x.repeat(times);
+  }
+
+  if (typeof x === "number") {
+    return x.toFixed(1).repeat(times);
+  }
+
+  assertNever(x);
+}
+```
+
+1. 💪 Passe deine Berechnungsfunktionen so an, dass sie alle Optionen des `VATType` abdecken und einen Type-Fehler zeigen, wenn irgendwann ein weitere Typ hinzugefügt wird.
+2. 💪 Erzeuge eine Lookup-Map von ProductCategory-Werten auf `VATTypes`, sodass wir an einer zentralen Stelle gepflegt haben, welche Steuer bei welcher Produktkategorie verwendet wird. Schreibe hier zuerst ein Typ-Alias für ein Objekt, welches alle Werte von `ProductCategory` als Schlüssel hat und jedem dieser Schlüssel `VATType` zuordnet. Danach können wir die Laufzeitvariable mit den richtigen Werten definieren. So sind wir wieder abgesichert, dass wir für jede Produktkategorie definiert haben, welcher Steuersatz relevant ist.
+
+## 11. Abschluss
+
+🎉 Gratuliere, du hast es geschafft! Du bist mit dem Kerninhalt des Workshops durch und hast einen ersten Einblick in die Arbeit mit TypeScript erhalten. Wie geht es jetzt weiter?
+Am besten mit der Arbeit an einem richtigen Projekt. Installiere zum Beispiel [Fastify](https://github.com/fastify/fastify/blob/HEAD/README.md#install), um dein Projekt um eine REST-Schnittstelle zu erweitern. Die Validierung von Inputs könntest du dabei mit [Zod](https://github.com/colinhacks/zod) so implementieren, dass auch direkt der richtige Typ für die Inputs herauspurzelt. Für eine erste Persitenz von Daten, kannst du dir die [FileSystem-API](https://nodejs.org/api/fs.html#fs_file_system) von Node.js anschauen und die Daten erstmal in eine JSON-Datei speichern.
