@@ -12,7 +12,7 @@
   - [4.1. Infrastruktur aufsetzen](#41-infrastruktur-aufsetzen)
 - [5. strict mode](#5-strict-mode)
 - [6. Die ersten besonderen Typen: Union Types & Literal Types](#6-die-ersten-besonderen-typen-union-types--literal-types)
-- [7. Typ- und Value-Welt](#7-typ--und-value-welt)
+- [7. Type- und Value-Welt](#7-type--und-value-welt)
 - [8. Generic Type alias](#8-generic-type-alias)
 - [9. never, any](#9-never-any)
 - [10. Mapped Types + Conditional Types](#10-mapped-types--conditional-types)
@@ -426,23 +426,98 @@ function computeNumbers(
 3. 💪 Definiere eine Funktion `createProduct`, die als Argumente Name, Preis & Kategorie erhält und ein Produkt-Objekt erzeugt. Für die ID soll eine zufällige Zahl zwischen 100.000 und 999.999 generiert werden.
 4. 💪 Schreibe Tests für `createProduct` und die resultierenden Produkte
 
-## 7. Typ- und Value-Welt
+## 7. Type- und Value-Welt
 
-- typeof
-- as const
-- indexed access type
-- Laufzeit und Typwerte gleichzeitig definieren
+🎓 Wissen: In TypeScript sind die Typ-Ebene und die Wert-Ebene erstmal strikt voneinander getrennt. Es kann in beiden Welten den gleichen Identifier geben, ohne, dass es zu Konflikten kommt, da bei jeder Referenz eindeutig ist, ob diese in der Typ-Ebene oder der Wert-Ebene gilt.
 
-Category und VATs aus Laufzeitwerten generieren
+```ts
+// Type and value can share same name.
+type Identifier = { a: number };
+let Identifier = { a: 1 };
 
-Dummy Data File bauen:
+// After ":", a type is expected, after "a" a value
+let x: Identifier = Identifier;
+```
 
-erzeuge 10 Produkte, mit zufälliger Kategorie, zufälligem Preis (zwischen 1 und 15€) und automatisch generiertem Name (Produkt 1, Produkt 2, etc.)
+🎓 Wissen: Einen Wert von der Typ-Ebene in die Wert-Ebene zu verschieben ist nicht möglich. Andersherum allerdings schon! Wir können aus bestimmten Werten den inferrierten Typ extrahieren und auf Typ-Ebene heben:
 
-Schreibe Funktion findProduct(products: Product[], partialProduct: {...})
-partialProduct: Hat alle Datenfelder (also nicht die Funktionen) von Product, Werte sind aber Optional
+```ts
+const person = { name: "Peter", age: 58 };
 
-und schreibe Tests
+// Using typeof on type level lifts a value
+// into the type level.
+type Person = typeof person;
+
+// Person is now { name: string, age: number }
+```
+
+🎓 Wissen: TypeScript inferiert bei string und number literals immer den "geweiteten" Typ string oder number, also in unserem Beispiel von oben nicht den literal Type `"Peter"` sondern `string`. Dieses Verhalten können wir mit Hilfe von const-Assertions noch weiter einschränken:
+
+```ts
+let x = { switch: "ON" as const };
+
+// X ={ switch: "ON"; }
+type X = typeof x;
+
+let y = ["A", "B", "C"] as const;
+
+// Y = readonly ["A", "B", "C"]
+type Y = typeof y;
+```
+
+🎓 Wissen: TypeScript erlaubt uns nicht nur, Typen aus Laufzeitwerten heraus zu generieren, wir können auch Typen aus anderen Typen extrahieren, kombinieren und so viel Schreib- und Wartungsarbeit sparen:
+
+```ts
+type BaseEntity = {
+  id: string;
+};
+
+// Always gets the type of the id field
+// When we change BaseEntity.id at a later point in time
+// EntityId will adapt automatically.
+type EntityId = BaseEntity["id"];
+
+// Whenever we need a new value for our switches
+// We add it here and the Type of a SwitchValue will
+// automatically adapt.
+const switchValues = ["ON", "OFF", "INDETERMINATE"] as const;
+
+// SwitchValues = readonly ["ON", "OFF", "INDETERMINATE"]
+type SwitchValues = typeof switchValues;
+
+// [number] extracts the union type of all indexes
+// of an array
+// SwitchValue = "ON" | "OFF" | "INDETERMINATE"
+type SwitchValue = SwitchValues[number];
+```
+
+🎯 Ziel: Wir möchten jetzt automatisiert einige Mock-Produkte erzeugen. Damit das geht, brauchen wir zur Laufzeit eine Liste aller möglichen Werte für den VAT-Type und die Produktkategorie. Um Werte nicht doppelt pflegen zu müssen, wollen wir die Typen aus Laufzeitwerten ableiten.
+
+1. 💪 Nutze const-assertions und den typeof Operator, um die Union-Types für `VATType` und `ProductCategory` aus Laufzeit-Werten zu extrahieren.
+2. 💪 Schreibe eine Funktion `generateMockProduct`, welche ein zufälliges Produkt (zufällige Kategorie, zufälliger Preis zwischen 1 und 15€ auf 2 Dezimalstellen gerundet) und automatisch generierten Name (Produkt - Zufallszahl) erzeugt.
+3. 💪 Nutze `generateMockProduct`, um 10 zufällige Produkte zu erzeugen.
+4. 💪 Definiere eine neue Funktion `filterProducts`. Ziel dieser Funktion ist es, aus der Liste der Produkte alle Produkte zu extrahieren, die die gleichen Felder wie Argument 2 haben.Die Funktion soll dafür 2 Argumente bekommen:
+   1. eine Liste von Produkten
+   2. ein Objekt, auf dem **[OPTIONAL](https://www.typescriptlang.org/docs/handbook/2/objects.html#optional-properties)** alle Datenfelder (name, id, productCategory & netPrice) aber NICHT die Funktion angegeben werden kann.
+5. 💪 Schreibe Tests für `filterProducts`, du kannst dich dabei an den folgenden Beispielen orientieren:
+
+```ts
+let products: Product[] = [
+  /* ... */
+];
+
+// returns all food products
+let filtered1 = filterProducts(products, { productCategory: "FOOD" });
+
+// returns all products that have the id 123456 AND have a price of 10
+let filtered2 = filterProducts(products, { id: 123456, price: 10 });
+
+// Should throw a TypeScript error, since getPriceDetails is not a valid
+// field to filter by (only data fields can be used)
+let filtered3 = filterProducts(products, { getPriceDetails: () => 1 });
+```
+
+💣 Problem: Wir haben jetzt eine schön dynamische Filterfunktion gebaut, wenn wir bei Produkten allerdings ein neues Feld hinzufügen, müssen wir selbst daran denken, die Filterfunktion anzupassen. Damit müssen wir wieder zwei Stellen im Code manuell synchron halten. Mit TypeScript kann das allerdings in den meisten Fällen vermieden werden!
 
 ## 8. Generic Type alias
 
