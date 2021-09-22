@@ -100,20 +100,21 @@ Wir wollen uns in diesem Workshop TypeScript erstmal isoliert anschauen, also oh
 
 ### 2.3. TypeScript einrichten
 
-🎓 Wissen: In einem npm-Projekt, sind alle Dependencies lokal installiert (im `node_modules` Ordner). Vorteil davon ist, dass es keine Konflikte mit globalen Installationen geben kann und, dass der Source Code der Pakete direkt verfügbar und damit debug und veränder bar ist. Als Nachteil liegen Pakete dadurch pro Projekt einmal auf der Festplatte, wodurch viel Speicherplatz verbraucht wird.
+🎓 Wissen: In einem npm-Projekt, sind alle Dependencies lokal installiert (im `node_modules` Ordner). Vorteil davon ist, dass es keine Konflikte mit globalen Installationen geben kann und, dass der Source Code der Pakete direkt verfügbar und damit debug und veränderbar ist. Als Nachteil liegen Pakete dadurch pro Projekt einmal auf der Festplatte, wodurch viel Speicherplatz verbraucht wird.
 
 🎓 Wissen: Zusätzlich zur `package.json` benötigt ein TypeScript-Projekt noch eine weitere Konfigurationsdatei, die `tsconfig.json`. Hier werden Konfiguriationen für den TypeScript-Compiler abgelegt.
 
 🎯 Ziel: Der TypeScript-Compiler ist installiert und konfiguriert, sodass du TypeScript Code entwickeln und ausführen kannst.
 
-1. 💪 Führe im Terminal `npm i --save-dev typescript ts-node`. `npm i ` steht dafür für `install`, `--save-dev` sagt npm, dass die Pakete nur für die Entwicklung unseres Projektes nötig sind, es sind keine Laufzeitabhängigkeiten. Die Einteilung in dependencies und devDependencies ist bei Applikationen aber eher Convention, nur bei der Entwicklung von Bibliotheken ist diese Trennung absolut wichtig.
-2. 💪 Lege im Root deines Projektes eine neue Datei an: `tsconfig.json` und befülle sie mit folgendem Inhalt:
+1. 💪 Bevor wir mit den Aufgaben anfangen, wollen wir unser Projekt mit git Versionieren. Führe dazu im Terminal `git init` aus. Füge zudem den `node_modules/` Ordner zu `.gitignore` hinzu und commite den aktuellen Stand.
+2. 💪 Führe im Terminal `npm i --save-dev typescript ts-node`. `npm i ` steht dafür für `install`, `--save-dev` sagt npm, dass die Pakete nur für die Entwicklung unseres Projektes nötig sind, es sind keine Laufzeitabhängigkeiten. Die Einteilung in dependencies und devDependencies ist bei Applikationen aber eher Convention, nur bei der Entwicklung von Bibliotheken ist diese Trennung absolut wichtig.
+3. 💪 Lege im Root deines Projektes eine neue Datei an: `tsconfig.json` und befülle sie mit folgendem Inhalt:
 
 ```json
 {
   "compilerOptions": {
     "moduleResolution": "Node",
-    "target": "ES2021",
+    "target": "ES2019",
     "noEmit": true,
     "esModuleInterop": true
   }
@@ -229,12 +230,12 @@ let x: any = null;
 x.some.field.that.does.not.exist(123);
 ```
 
-🎓 Wissen: Durch die Inferenz von TypeScript verbreitet sich any, wenn es einmal da ist, wie ein Lauffeuer im System. Du solltest beim Entwickeln stets darauf achten. dass `any` nur innerhalb eines Modules/einer Funktion benutzt wird. Die Grenzen zwischen Modulen/System sollten immer richtig typisiert sein.
+🎓 Wissen: Durch die Inferenz von TypeScript verbreitet sich any, wenn es einmal da ist, wie ein Lauffeuer im System. Du solltest beim Entwickeln stets darauf achten. dass `any` nur innerhalb eines Modules/einer Funktion benutzt wird. Die Grenzen zwischen Modulen/Systemen sollten immer richtig typisiert sein.
 
 🎓 Wissen: Seit 2015 unterstützt JavaScript sein eigenes Modul-System ([MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules)). Mit diesen Modulen können wir unseren Code auf mehrere Dateien aufteilen und klar-definierte Grenzen zwischen diesen Dateien schaffen. TypeScript unterstützt dieses Modulsystem auch vollständig:
 
 ```ts
-// src/lib/library.js
+// src/lib/library.ts
 
 export const pi = 3;
 
@@ -244,7 +245,7 @@ export function circumference(radius: number) {
 ```
 
 ```ts
-// src/app.js
+// src/app.ts
 
 // Paths to own modules must start with .
 // Otherwise installed packages from node_modules
@@ -304,11 +305,10 @@ test("True should be true", () => {
 
 🎓 Wissen: Du kannst einem npm-Skript auch weitere Command-Line-Arguments mitgeben, indem du die Argumente für das Skript mit `--` von den Argumenten für npm abtrennst. Du kannst zum Beispiel: `npm run test -- --watch` benutzen, um den Watch-Modus von Jest zu aktivieren.
 
-6. 💪 Schreibe Tests für `calculateVAT` und decke dabei mindestens die folgenden Fälle ab:
+6. 💪 Schreibe Tests ([Dokumentation zu Matching-Funktionen](https://jestjs.io/docs/using-matchers)) für `calculateVAT` und decke dabei mindestens die folgenden Fälle ab:
    1. `10` -> `1.9`
    2. `12` -> `2.28`
-   3. `"test"` -> ⚡ - soll nicht gehen
-   4. `null` -> ⚡ - Soll nicht gehen
+   3. `null` -> ⚡ - Soll Laufzeitfehler werfen.
 
 💣 Problem: Das ist ja erstmal schon nicht schlecht. Mich stört aber, dass wir den null-Fall quasi bei jeder Funktion abdecken müssten. Glücklicherweise hat TypeScript dafür eine Lösung!
 
@@ -406,6 +406,9 @@ function computeNumbers(
 
   return result;
 }
+
+// returns 2, 4, 6
+computeNumbers([1, 2, 3], (n) => n * 2);
 ```
 
 🎯 Ziel: Weitere Domänen-Konzepte sind definiert
@@ -419,7 +422,7 @@ function computeNumbers(
    2. name
    3. productCategory
    4. netPrice
-   5. getPriceDetails (berechnet anhand der Kategorie und des Netto-Preises die Steuer-Details)
+   5. getPriceDetails (berechnet anhand der Kategorie und des Netto-Preises die Steuer-Details) - Rückgabewert soll analog zu `calculatePriceDetails` gebaut werden.
 3. 💪 Definiere eine Funktion `createProduct`, die als Argumente Name, Preis & Kategorie erhält und ein Produkt-Objekt erzeugt. Für die ID soll eine zufällige Zahl zwischen 100.000 und 999.999 generiert werden.
 4. 💪 Schreibe Tests für `createProduct` und die resultierenden Produkte
 
@@ -436,7 +439,7 @@ let Identifier = { a: 1 };
 let x: Identifier = Identifier;
 ```
 
-🎓 Wissen: Einen Wert von der Typ-Ebene in die Wert-Ebene zu verschieben ist nicht möglich. Andersherum allerdings schon! Wir können aus bestimmten Werten den inferrierten Typ extrahieren und auf Typ-Ebene heben:
+🎓 Wissen: Einen Wert von der Typ-Ebene in die Wert-Ebene zu verschieben ist nicht möglich. Andersherum allerdings schon! Wir können aus bestimmten Werten den inferierten Typ extrahieren und auf Typ-Ebene heben:
 
 ```ts
 const person = { name: "Peter", age: 58 };
@@ -453,7 +456,7 @@ type Person = typeof person;
 ```ts
 let x = { switch: "ON" as const };
 
-// X ={ switch: "ON"; }
+// X = { switch: "ON"; }
 type X = typeof x;
 
 let y = ["A", "B", "C"] as const;
@@ -493,7 +496,7 @@ type SwitchValue = SwitchValues[number];
 1. 💪 Nutze const-assertions und den typeof Operator, um die Union-Types für `VATType` und `ProductCategory` aus Laufzeit-Werten zu extrahieren.
 2. 💪 Schreibe eine Funktion `generateMockProduct`, welche ein zufälliges Produkt (zufällige Kategorie, zufälliger Preis zwischen 1 und 15€ auf 2 Dezimalstellen gerundet) und automatisch generierten Name (Produkt - Zufallszahl) erzeugt.
 3. 💪 Nutze `generateMockProduct`, um 10 zufällige Produkte zu erzeugen.
-4. 💪 Definiere eine neue Funktion `filterProducts`. Ziel dieser Funktion ist es, aus der Liste der Produkte alle Produkte zu extrahieren, die die gleichen Felder wie Argument 2 haben.Die Funktion soll dafür 2 Argumente bekommen:
+4. 💪 Definiere eine neue Funktion `filterProducts`. Ziel dieser Funktion ist es, aus der Liste der Produkte alle Produkte zu extrahieren, die die gleichen Felder wie Argument 2 haben. Die Funktion soll dafür 2 Argumente bekommen:
    1. eine Liste von Produkten
    2. ein Objekt, auf dem **[OPTIONAL](https://www.typescriptlang.org/docs/handbook/2/objects.html#optional-properties)** alle Datenfelder (name, id, productCategory & netPrice) aber NICHT die Funktion angegeben werden kann.
 5. 💪 Schreibe Tests für `filterProducts`, du kannst dich dabei an den folgenden Beispielen orientieren:
@@ -559,10 +562,11 @@ type PartialT1 = PartialObject<T1>;
 
 🎓 Wissen: Viele dieser Typ-Transformationen sind bereits in TypeScript eingebaut und global verfügbar (wie z.B. `Partial`, eine eingebaute Implementierung des `PartialObject` Beispiels). Eine Liste dieser eingebauten Typen findet sich in der [Dokumentation](https://www.typescriptlang.org/docs/handbook/utility-types.html).
 
-1. 💪 Füge auf dem Produkt ein weiteres Feld `description` hinzu. Achte darauf, an wie vielen Stellen du dieses Feld auf Typebene definieren musst, damit alles wieder funktioniert. **Achtung** Die Filterfunktion soll auch nach diesem Feld filtern können.
-2. 💪 Anstatt den `Product` Typ selbst zu definieren, wollen wir diesen aus dem Rückgabewert von `createProduct` extrahieren. Nutze dazu `typeof` + weitere [Hilfstypen](https://www.typescriptlang.org/docs/handbook/utility-types.html)
-3. 💪 Anstatt das Partielle Produkt von `filterProducts` manuell anzugeben, soll dieses aus dem ursprünglichen `Product` Typ generiert werden. Achte daruaf, dass Felder
-4. 💯 Zusatzaufgabe für Experten: Schreibe den Typ für das partielle Produkt so, dass automatisch nur die Felder angegeben werden können, in denen KEINE Funktionen liegt. Wenn also auf `Product` eine weitere Funktion z.B. `serialize` gepflegt wird, soll danach nicht gefiltert werden dürfen (ohne Anpassungen an `filterProducts`) und wenn ein weiteres Datenfeld dazukommt, soll es automatisch mit gefiltert werden können.
+1. 💪 Füge auf dem Produkt ein weiteres Feld `description` hinzu und behebe alle Compile-Fehler. **Hinweis:** Nutze das tsc-Script was wir definiert haben.
+2. 💪 Nachdem du die Typfehler beseitigt hast, überlege, an welchen Stellen das neue Feld jetzt noch hinzugefügt werden muss...
+3. 💪 Anstatt den `Product` Typ selbst zu definieren, wollen wir diesen aus dem Rückgabewert von `createProduct` extrahieren. Nutze dazu `typeof` + weitere [Hilfstypen](https://www.typescriptlang.org/docs/handbook/utility-types.html)
+4. 💪 Anstatt das Partielle Produkt von `filterProducts` manuell anzugeben, soll dieses aus dem ursprünglichen `Product` Typ generiert werden. Achte daruaf, dass das Feld `getPriceDetails` nicht enthalten ist.
+5. 💯 Zusatzaufgabe für Experten: Schreibe den Typ für das partielle Produkt so, dass automatisch nur die Felder angegeben werden können, in denen KEINE Funktionen liegt. Wenn also auf `Product` eine weitere Funktion z.B. `serialize` gepflegt wird, soll danach nicht gefiltert werden dürfen (ohne Anpassungen an `filterProducts`) und wenn ein weiteres Datenfeld dazukommt, soll es automatisch mit gefiltert werden können.
 
 ## 9. any @ts-ignore und @ts-expect-error
 
