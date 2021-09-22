@@ -15,6 +15,7 @@
 - [7. Type- und Value-Welt](#7-type--und-value-welt)
 - [8. Generic Type alias](#8-generic-type-alias)
 - [9. any @ts-ignore und @ts-expect-error](#9-any-ts-ignore-und-ts-expect-error)
+- [10. Exhaustivenes checks](#10-exhaustivenes-checks)
 - [11. Abschluss](#11-abschluss)
 
 # TypeScript — Eine Kostprobe
@@ -603,6 +604,8 @@ test("sum should throw an error when called with anything but numbers", () => {
 2. 💪 Füge bei `VATType` einen neuen Wert hinzu: `TEMPORARY_COVID_VAT`
 
 💣 Problem: Immerhin können wir jetzt einen Test für unbekannte VAT-Typen schreiben. Beim Hinzufügen eines neuen Wertes müssen wir aber immer noch selbst wissen, ob wir diesen neuen Wert überall hinzugefügt haben. Unter Umständen hast du die letzte Aufgabe schon so interpretiert, dass natürlich die Berechnungsfunktionen auch mit diesem neuen Wert umgehen können müssen. Hätte jemand anderes das auch gewusst? Hätte jemand das gewusst, der gerade neu ins Projekt gekommen ist? Irgendwie müssten wir eine Möglichkeit finden, den Compiler dazu zu nutzen, alle Stellen zu finden, wo wir ALLE Optionen abprüfen wollen...
+
+## 10. Exhaustivenes checks
 
 🎓 Wissen: Wir können uns hier ein Feature von TypeScript zu nutzen machen, was wir ganz am Anfang schon mal abgedeckt hatten: Die Control-Flow-Analyse von TypeScript
 
