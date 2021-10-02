@@ -319,7 +319,7 @@ test("True should be true", () => {
 
 🎯 Ziel: Wir möchten von Anfang an im strict mode arbeiten, da TypeScript so wesentlich mehr Fehler finden kann und uns dazu zwingt, unsere Typen genauer zu definieren.
 
-1. 💪 Öffne `tsconfig.json` und füge in die `compilerOptions` ein: `"string": true`
+1. 💪 Öffne `tsconfig.json` und füge in die `compilerOptions` ein: `"strict": true`
 2. 💪 Starte das `tsc-watch`-Skript erneut und behebe alle Compile-Fehler
 
 💣 Problem: Großartig, du musst nun nie wieder auf null prüfen! TypeScript erlaubt es nicht mehr, Funktionen mit `null` aufzurufen! Das heißt aber nicht, dass wir null überhaupt nicht mehr nutzen dürfen. Wenn wir es benutzen wollen, müssen wir nur mit angeben, dass Variablen oder Parameter auch null sein dürfen. In diesen Fällen wird TypeScript uns dann zwingen, erst die Null-Variante zu prüfen, bevor wir mit Werten arbeiten.
